@@ -5,23 +5,18 @@ interface StationCardProps {
   station: Station;
 }
 
-const formatLines = (lines: string[]) => lines.join(', ');
-
 export function StationCard({ station }: StationCardProps) {
   const hasInternationalNames =
     station.englishName || station.chineseName || station.japaneseName;
+  const lineLabel = station.lines.length > 0 ? station.lines.join(', ') : '';
 
   return (
     <article className="station-card">
       <header className="station-card__header">
-        <h2>{station.name}</h2>
-        <div className="station-card__lines">
-          {station.lines.map((line) => (
-            <span key={line} className="station-card__line-chip">
-              {line}
-            </span>
-          ))}
-        </div>
+        <h2 className="station-card__title">
+          <span className="station-card__name">{station.name}</span>
+          {lineLabel && <span className="station-card__line">({lineLabel})</span>}
+        </h2>
       </header>
 
       {hasInternationalNames && (
@@ -59,10 +54,6 @@ export function StationCard({ station }: StationCardProps) {
           <span>
             {station.latitude.toFixed(6)}, {station.longitude.toFixed(6)}
           </span>
-        </p>
-        <p>
-          <strong>호선</strong>
-          <span>{formatLines(station.lines)}</span>
         </p>
       </section>
     </article>
