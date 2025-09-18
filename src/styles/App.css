@@ -40,8 +40,65 @@
 .app__main {
   width: 100%;
   display: flex;
+  flex-direction: column;
   justify-content: center;
+  align-items: center;
+  gap: 24px;
   padding: 0 16px;
+  min-height: 280px;
+  text-align: center;
+}
+
+.app__intro {
+  max-width: 520px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  line-height: 1.6;
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.app__intro-note {
+  font-weight: 600;
+  color: #facc15;
+}
+
+.app__drawing {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-height: 180px;
+  color: rgba(248, 250, 252, 0.92);
+}
+
+.app__drawing-spinner {
+  display: flex;
+  gap: 10px;
+}
+
+.app__drawing-spinner span {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: linear-gradient(120deg, #f97316, #f472b6);
+  opacity: 0.6;
+  animation: app-draw-bounce 0.8s ease-in-out infinite;
+}
+
+.app__drawing-spinner span:nth-child(2) {
+  animation-delay: 0.12s;
+}
+
+.app__drawing-spinner span:nth-child(3) {
+  animation-delay: 0.24s;
+}
+
+.app__station-wrapper {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  animation: app-fade-in-up 0.4s ease forwards;
 }
 
 .app__placeholder {
@@ -79,6 +136,13 @@
   transform: translateY(0);
 }
 
+.app__button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
 .app__data-link {
   color: rgba(248, 250, 252, 0.75);
   font-size: 0.95rem;
@@ -89,6 +153,31 @@
   text-decoration: underline;
 }
 
+@keyframes app-draw-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.6;
+  }
+
+  50% {
+    transform: translateY(-8px);
+    opacity: 1;
+  }
+}
+
+@keyframes app-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
 @media (max-width: 640px) {
   .app {
     padding: 32px 12px 48px;
@@ -96,5 +185,10 @@
 
   .app__header {
     margin-bottom: 24px;
+  }
+
+  .app__main {
+    min-height: 240px;
+    gap: 20px;
   }
 }

@@ -3,6 +3,7 @@ import type { Station } from '../types/subway';
 
 export interface UseRandomStationOptions {
   avoidImmediateRepeat?: boolean;
+  autoDrawOnMount?: boolean;
 }
 
 interface UseRandomStationResult {
@@ -12,7 +13,10 @@ interface UseRandomStationResult {
 
 export const useRandomStation = (
   stations: Station[],
-  { avoidImmediateRepeat = true }: UseRandomStationOptions = {}
+  {
+    avoidImmediateRepeat = true,
+    autoDrawOnMount = true,
+  }: UseRandomStationOptions = {}
 ): UseRandomStationResult => {
   const [currentStation, setCurrentStation] = useState<Station | null>(null);
 
@@ -41,8 +45,10 @@ export const useRandomStation = (
   }, [avoidImmediateRepeat, stations]);
 
   useEffect(() => {
-    drawStation();
-  }, [drawStation]);
+    if (autoDrawOnMount) {
+      drawStation();
+    }
+  }, [autoDrawOnMount, drawStation]);
 
   return { currentStation, drawStation };
 };
