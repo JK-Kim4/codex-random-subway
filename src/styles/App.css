@@ -9,7 +9,7 @@
 
 .app__header {
   text-align: center;
-  max-width: 640px;
+  max-width: 680px;
   margin-bottom: 32px;
   display: flex;
   flex-direction: column;
@@ -26,6 +26,7 @@
   margin: 0;
   font-size: 1rem;
   color: rgba(248, 250, 252, 0.86);
+  line-height: 1.6;
 }
 
 .app__meta {
@@ -43,18 +44,18 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  gap: 24px;
+  gap: 32px;
   padding: 0 16px;
-  min-height: 280px;
+  min-height: 320px;
   text-align: center;
 }
 
 .app__intro {
-  max-width: 520px;
+  max-width: 560px;
   display: flex;
   flex-direction: column;
   gap: 14px;
-  line-height: 1.6;
+  line-height: 1.7;
   color: rgba(248, 250, 252, 0.92);
 }
 
@@ -64,40 +65,119 @@
 }
 
 .app__drawing {
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
-  min-height: 180px;
+  gap: 20px;
+  min-height: 220px;
   color: rgba(248, 250, 252, 0.92);
 }
 
-.app__drawing-spinner {
+.app__drawing-board {
+  width: 100%;
+  max-width: 720px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px;
+  perspective: 900px;
+}
+
+.app__drawing-slot {
+  position: relative;
+  padding: 18px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: linear-gradient(155deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.72));
+  box-shadow: 0 18px 36px rgba(15, 23, 42, 0.35);
+  overflow: hidden;
   display: flex;
-  gap: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  transform-style: preserve-3d;
+  animation: app-slot-flip 1s ease-in-out infinite;
 }
 
-.app__drawing-spinner span {
-  width: 12px;
-  height: 12px;
+.app__drawing-slot::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 0%, rgba(250, 204, 21, 0.4), transparent 65%);
+  opacity: 0;
+  animation: app-slot-shimmer 1.5s ease-in-out infinite;
+  animation-delay: inherit;
+}
+
+.app__drawing-slot::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: 16px;
+  border: 1px solid rgba(94, 234, 212, 0.35);
+  opacity: 0;
+  animation: app-slot-glow 1.6s ease-in-out infinite;
+  animation-delay: inherit;
+  pointer-events: none;
+}
+
+.app__drawing-slot-order {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(120deg, #f97316, #f472b6);
-  opacity: 0.6;
-  animation: app-draw-bounce 0.8s ease-in-out infinite;
+  background: rgba(250, 204, 21, 0.2);
+  color: #facc15;
+  font-weight: 700;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
 }
 
-.app__drawing-spinner span:nth-child(2) {
-  animation-delay: 0.12s;
+.app__drawing-slot strong {
+  position: relative;
+  z-index: 1;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: #f8fafc;
+  text-align: center;
+  text-shadow: 0 6px 16px rgba(15, 23, 42, 0.6);
 }
 
-.app__drawing-spinner span:nth-child(3) {
-  animation-delay: 0.24s;
+.app__drawing-slot small {
+  position: relative;
+  z-index: 1;
+  font-size: 0.75rem;
+  color: rgba(226, 232, 240, 0.78);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
-.app__station-wrapper {
+.app__results {
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+}
+
+.app__results-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: rgba(248, 250, 252, 0.95);
+}
+
+.app__station-grid {
+  width: 100%;
+  max-width: 1040px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  justify-items: center;
   animation: app-fade-in-up 0.4s ease forwards;
 }
 
@@ -111,7 +191,81 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 12px;
+  gap: 18px;
+}
+
+.app__count-control {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  text-align: center;
+}
+
+.app__count-control label {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: rgba(248, 250, 252, 0.9);
+}
+
+.app__count-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px;
+  border-radius: 9999px;
+  background: rgba(15, 23, 42, 0.55);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  box-shadow: inset 0 0 0 1px rgba(15, 23, 42, 0.3);
+}
+
+.app__count-button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: none;
+  background: linear-gradient(135deg, #f472b6, #f97316);
+  color: #0f172a;
+  font-size: 1.25rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 24px rgba(249, 115, 22, 0.35);
+}
+
+.app__count-button:not(:disabled):hover {
+  transform: translateY(-1px);
+}
+
+.app__count-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+.app__count-input {
+  width: 60px;
+  border: none;
+  background: transparent;
+  color: #f8fafc;
+  text-align: center;
+  font-size: 1.05rem;
+  font-weight: 600;
+  outline: none;
+  -moz-appearance: textfield;
+}
+
+.app__count-input::-webkit-outer-spin-button,
+.app__count-input::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.app__count-hint {
+  margin: 0;
+  font-size: 0.8rem;
+  color: rgba(148, 163, 184, 0.85);
 }
 
 .app__button {
@@ -153,16 +307,36 @@
   text-decoration: underline;
 }
 
-@keyframes app-draw-bounce {
+@keyframes app-slot-flip {
   0%,
   100% {
-    transform: translateY(0);
-    opacity: 0.6;
+    transform: rotateX(0deg);
   }
 
   50% {
-    transform: translateY(-8px);
-    opacity: 1;
+    transform: rotateX(16deg) scale(1.02);
+  }
+}
+
+@keyframes app-slot-glow {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  40% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes app-slot-shimmer {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  35% {
+    opacity: 0.55;
   }
 }
 
@@ -178,6 +352,12 @@
   }
 }
 
+@media (max-width: 720px) {
+  .app__drawing-board {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  }
+}
+
 @media (max-width: 640px) {
   .app {
     padding: 32px 12px 48px;
@@ -188,7 +368,11 @@
   }
 
   .app__main {
-    min-height: 240px;
-    gap: 20px;
+    min-height: 280px;
+    gap: 28px;
+  }
+
+  .app__station-grid {
+    grid-template-columns: 1fr;
   }
 }

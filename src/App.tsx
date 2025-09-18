@@ -1,9 +1,12 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import StationCard from './components/StationCard';
 import subwayRaw from './assets/subway.json';
 import { useRandomStation } from './hooks/useRandomStation';
 import type { RawStation, RawSubwayData, Station } from './types/subway';
 import './styles/App.css';
+
+const MIN_DRAW_COUNT = 1;
+const MAX_DRAW_COUNT = 5;
 
 const toStationKey = (station: RawStation) => station.station_cd ?? `${station.line}-${station.name}`;
 
@@ -48,61 +51,168 @@ const buildStationList = (data: RawSubwayData): Station[] => {
     });
   });
 
-  return Array.from(stationMap.values()).sort((a, b) =>
-    a.name.localeCompare(b.name, 'ko')
-  );
+  return Array.from(stationMap.values()).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 };
 
 function App() {
   const dataset = subwayRaw as RawSubwayData;
 
   const stations = useMemo(() => buildStationList(dataset), [dataset]);
-  const { currentStation, drawStation } = useRandomStation(stations, {
+  const maxSelectable = Math.max(MIN_DRAW_COUNT, Math.min(MAX_DRAW_COUNT, stations.length || MIN_DRAW_COUNT));
+  const { currentStations, drawStations } = useRandomStation(stations, {
     autoDrawOnMount: false,
   });
+
+  const [drawCount, setDrawCount] = useState<number>(MIN_DRAW_COUNT);
+  const [activeDrawCount, setActiveDrawCount] = useState<number>(MIN_DRAW_COUNT);
   const [hasStarted, setHasStarted] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
-  const [displayedStation, setDisplayedStation] = useState<Station | null>(null);
-  const latestStationRef = useRef<Station | null>(null);
+  const [displayedStations, setDisplayedStations] = useState<Station[]>([]);
+  const [loadingPreview, setLoadingPreview] = useState<Station[]>([]);
+  const latestStationsRef = useRef<Station[]>([]);
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previewIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const clampCount = useCallback(
+    (value: number) => {
+      const floored = Number.isFinite(value) ? Math.floor(value) : MIN_DRAW_COUNT;
+      return Math.min(Math.max(MIN_DRAW_COUNT, floored), maxSelectable);
+    },
+    [maxSelectable],
+  );
+
+  const generatePreview = useCallback(
+    (count: number) => {
+      if (stations.length === 0) {
+        return [];
+      }
+
+      const safeCount = Math.min(Math.max(MIN_DRAW_COUNT, count), stations.length);
+      const usedIds = new Set<string>();
+      const preview: Station[] = [];
+      const maxAttempts = stations.length * 2;
+      let attempt = 0;
+
+      while (preview.length < safeCount && attempt < maxAttempts) {
+        const candidate = stations[Math.floor(Math.random() * stations.length)];
+        attempt += 1;
+
+        if (usedIds.has(candidate.id)) {
+          continue;
+        }
+
+        usedIds.add(candidate.id);
+        preview.push(candidate);
+      }
+
+      if (preview.length < safeCount) {
+        for (const station of stations) {
+          if (!usedIds.has(station.id)) {
+            preview.push(station);
+            usedIds.add(station.id);
+          }
+
+          if (preview.length === safeCount) {
+            break;
+          }
+        }
+      }
+
+      return preview;
+    },
+    [stations],
+  );
 
   useEffect(() => {
-    latestStationRef.current = currentStation;
-  }, [currentStation]);
+    latestStationsRef.current = currentStations;
+  }, [currentStations]);
 
-  useEffect(() => () => {
-    if (revealTimeoutRef.current) {
-      clearTimeout(revealTimeoutRef.current);
+  const clearPreviewInterval = () => {
+    if (previewIntervalRef.current) {
+      clearInterval(previewIntervalRef.current);
+      previewIntervalRef.current = null;
     }
-  }, []);
+  };
+
+  useEffect(
+    () => () => {
+      if (revealTimeoutRef.current) {
+        clearTimeout(revealTimeoutRef.current);
+      }
+
+      clearPreviewInterval();
+    },
+    [],
+  );
+
+  useEffect(() => {
+    setDrawCount((prev) => clampCount(prev));
+  }, [clampCount]);
+
+  const handleCountChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const nextValue = Number(event.target.value);
+
+    if (Number.isNaN(nextValue)) {
+      setDrawCount(MIN_DRAW_COUNT);
+      return;
+    }
+
+    setDrawCount(clampCount(nextValue));
+  };
+
+  const adjustCount = (delta: number) => {
+    setDrawCount((prev) => clampCount(prev + delta));
+  };
 
   const handleDraw = () => {
     if (stations.length === 0) {
       return;
     }
 
+    const nextCount = clampCount(drawCount);
+    const initialPreview = generatePreview(nextCount);
+
     setHasStarted(true);
+    setDisplayedStations([]);
+    setActiveDrawCount(nextCount);
+    setLoadingPreview(initialPreview);
     setIsDrawing(true);
-    setDisplayedStation(null);
-    drawStation();
+    drawStations(nextCount);
 
     if (revealTimeoutRef.current) {
       clearTimeout(revealTimeoutRef.current);
     }
 
+    clearPreviewInterval();
+
+    previewIntervalRef.current = setInterval(() => {
+      setLoadingPreview(generatePreview(nextCount));
+    }, 140);
+
     revealTimeoutRef.current = setTimeout(() => {
-      setDisplayedStation(latestStationRef.current ?? null);
+      setDisplayedStations(latestStationsRef.current);
       setIsDrawing(false);
-    }, 900);
+      clearPreviewInterval();
+      setLoadingPreview([]);
+    }, 1600);
   };
+
+  const currentButtonLabel = hasStarted
+    ? activeDrawCount > 1
+      ? '다른 역들 다시 뽑기'
+      : '다른 역 다시 뽑기'
+    : '오늘의 역 뽑기';
 
   return (
     <div className="app">
       <header className="app__header">
         <h1>랜덤 지하철 역 뽑기</h1>
         <p>
-          노선도 위에서 손가락이 방황하는 날, 대신 버튼을 눌러 오늘의 행선지를 추천받아보세요. 어쩌면 집 앞 역이
-          다시 나올지도, 전혀 가보지 못한 곳이 나올지도 몰라요.
+          노선도 위에서 손가락이 방황하는 날, 대신 버튼을 눌러 오늘의 행선지를 추천받아보세요. 어쩌면 집 앞 역이 다시
+          나올지도, 전혀 가보지 못한 곳이 나올지도 몰라요.
+        </p>
+        <p>
+          원하는 개수만큼 동시에 추첨해보세요. 순간 번쩍이는 추첨 보드가 오늘의 후보들을 신나게 섞어 드립니다.
         </p>
         <p className="app__meta">
           총 <strong>{stations.length}</strong>개 역 정보 수록 · 데이터 버전 {dataset.VERSION}
@@ -114,43 +224,93 @@ function App() {
           <section className="app__intro">
             <p>오늘은 어떤 역이 기다리고 있을까요? 무작정 떠나고 싶은 마음에 노선도를 덮어놓았습니다.</p>
             <p>
-              역 뽑기 버튼을 누르면 잠깐의 셔플 끝에 추천 역이 등장합니다. 마음속에서 &ldquo;이번엔 어디쯤일까?&rdquo;라는
-              설렘이 피어오를 거예요.
+              이제는 한 번에 여러 역을 추천받을 수 있어요. 뽑을 개수를 정하고 버튼을 누르면, 추첨 보드가 분주하게
+              이름표를 뒤섞기 시작합니다.
             </p>
             <p className="app__intro-note">자, 준비되셨다면 버튼을 눌러 랜덤 여정을 시작해볼까요?</p>
           </section>
         )}
 
         {hasStarted && isDrawing && (
-          <section className="app__drawing">
-            <div className="app__drawing-spinner" aria-hidden="true">
-              <span />
-              <span />
-              <span />
+          <section className="app__drawing" aria-label="랜덤 역 추첨 진행 중">
+            <div className="app__drawing-board" aria-hidden="true">
+              {(loadingPreview.length > 0 ? loadingPreview : generatePreview(activeDrawCount)).map((previewStation, index) => (
+                <div
+                  key={`${previewStation.id}-${index}`}
+                  className="app__drawing-slot"
+                  style={{ animationDelay: `${index * 120}ms` }}
+                >
+                  <span className="app__drawing-slot-order">#{index + 1}</span>
+                  <strong>{previewStation.name}</strong>
+                  <small>{previewStation.lines.join(', ')}</small>
+                </div>
+              ))}
             </div>
-            <p>잠시만요! 오늘의 행선지를 섞는 중입니다...</p>
+            <p>잠시만요! {activeDrawCount}개의 행선지를 셔플 중입니다...</p>
           </section>
         )}
 
-        {hasStarted && !isDrawing && displayedStation && (
-          <div className="app__station-wrapper">
-            <StationCard station={displayedStation} />
-          </div>
+        {hasStarted && !isDrawing && displayedStations.length > 0 && (
+          <section className="app__results">
+            <p className="app__results-title">
+              오늘의 추천 역{displayedStations.length > 1 ? ` ${displayedStations.length}곳` : ''}입니다!
+            </p>
+            <div className="app__station-grid">
+              {displayedStations.map((station) => (
+                <StationCard key={station.id} station={station} />
+              ))}
+            </div>
+          </section>
         )}
 
-        {hasStarted && !isDrawing && !displayedStation && (
+        {hasStarted && !isDrawing && displayedStations.length === 0 && (
           <p className="app__placeholder">추천할 역을 찾지 못했어요. 다시 시도해 주세요.</p>
         )}
       </main>
 
       <footer className="app__footer">
+        <div className="app__count-control">
+          <label htmlFor="station-count">한 번에 뽑을 역 개수</label>
+          <div className="app__count-field">
+            <button
+              type="button"
+              className="app__count-button"
+              onClick={() => adjustCount(-1)}
+              disabled={isDrawing || drawCount <= MIN_DRAW_COUNT}
+            >
+              −
+            </button>
+            <input
+              id="station-count"
+              type="number"
+              min={MIN_DRAW_COUNT}
+              max={maxSelectable}
+              value={drawCount}
+              onChange={handleCountChange}
+              disabled={isDrawing}
+              className="app__count-input"
+              inputMode="numeric"
+              aria-label="한 번에 뽑을 역 개수"
+            />
+            <button
+              type="button"
+              className="app__count-button"
+              onClick={() => adjustCount(1)}
+              disabled={isDrawing || drawCount >= maxSelectable}
+            >
+              +
+            </button>
+          </div>
+          <p className="app__count-hint">최대 {maxSelectable}개까지 한 번에 추첨할 수 있어요.</p>
+        </div>
+
         <button
           type="button"
           className="app__button"
           onClick={handleDraw}
           disabled={isDrawing || stations.length === 0}
         >
-          {hasStarted ? '다른 역 뽑기' : '오늘의 역 뽑기'}
+          {currentButtonLabel}
         </button>
         <a className="app__data-link" href={dataset.URL} target="_blank" rel="noreferrer">
           데이터 출처 보기
