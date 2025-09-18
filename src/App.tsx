@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import StationCard from './components/StationCard';
 import subwayRaw from './assets/subway.json';
 import { useRandomStation } from './hooks/useRandomStation';
-import type { RawEdge, RawStation, RawSubwayData, Station } from './types/subway';
+import type { RawStation, RawSubwayData, Station } from './types/subway';
 import './styles/App.css';
 
 const toStationKey = (station: RawStation) => station.station_cd ?? `${station.line}-${station.name}`;
@@ -10,39 +10,41 @@ const toStationKey = (station: RawStation) => station.station_cd ?? `${station.l
 const buildStationList = (data: RawSubwayData): Station[] => {
   const stationMap = new Map<string, Station>();
 
-  data.DATA.forEach((edge: RawEdge) => {
-    edge.station.forEach((rawStation) => {
-      const id = toStationKey(rawStation);
-      const existing = stationMap.get(id);
+  data.DATA.forEach((line) => {
+    line.node.forEach((edge) => {
+      edge.station.forEach((rawStation) => {
+        const id = toStationKey(rawStation);
+        const existing = stationMap.get(id);
 
-      if (existing) {
-        const lines = existing.lines.includes(rawStation.line)
-          ? existing.lines
-          : [...existing.lines, rawStation.line];
+        if (existing) {
+          const lines = existing.lines.includes(rawStation.line)
+            ? existing.lines
+            : [...existing.lines, rawStation.line];
 
-        stationMap.set(id, {
-          ...existing,
-          lines,
-          englishName: existing.englishName ?? rawStation.station_nm_eng,
-          chineseName: existing.chineseName ?? rawStation.station_nm_chn,
-          japaneseName: existing.japaneseName ?? rawStation.station_nm_jpn,
-          frCode: existing.frCode ?? rawStation.fr_code,
-          latitude: existing.latitude ?? rawStation.lat,
-          longitude: existing.longitude ?? rawStation.lng,
-        });
-      } else {
-        stationMap.set(id, {
-          id,
-          name: rawStation.name,
-          lines: [rawStation.line],
-          englishName: rawStation.station_nm_eng,
-          chineseName: rawStation.station_nm_chn,
-          japaneseName: rawStation.station_nm_jpn,
-          frCode: rawStation.fr_code,
-          latitude: rawStation.lat,
-          longitude: rawStation.lng,
-        });
-      }
+          stationMap.set(id, {
+            ...existing,
+            lines,
+            englishName: existing.englishName ?? rawStation.station_nm_eng,
+            chineseName: existing.chineseName ?? rawStation.station_nm_chn,
+            japaneseName: existing.japaneseName ?? rawStation.station_nm_jpn,
+            frCode: existing.frCode ?? rawStation.fr_code,
+            latitude: existing.latitude ?? rawStation.lat,
+            longitude: existing.longitude ?? rawStation.lng,
+          });
+        } else {
+          stationMap.set(id, {
+            id,
+            name: rawStation.name,
+            lines: [rawStation.line],
+            englishName: rawStation.station_nm_eng,
+            chineseName: rawStation.station_nm_chn,
+            japaneseName: rawStation.station_nm_jpn,
+            frCode: rawStation.fr_code,
+            latitude: rawStation.lat,
+            longitude: rawStation.lng,
+          });
+        }
+      });
     });
   });
 

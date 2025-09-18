@@ -16,12 +16,20 @@ export interface RawEdge {
   via: [number, number][];
 }
 
+export interface RawLine {
+  line: string;
+  line_name: string;
+  line_subname: string;
+  color: string;
+  node: RawEdge[];
+}
+
 export interface RawSubwayData {
   VERSION: string;
   URL: string;
   REFERENCE: Record<string, string>;
   DESCRIPTION: Record<string, unknown>;
-  DATA: RawEdge[];
+  DATA: RawLine[];
 }
 
 export interface Station {
