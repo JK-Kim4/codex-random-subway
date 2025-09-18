@@ -1,0 +1,100 @@
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 16px 64px;
+  color: #f8fafc;
+}
+
+.app__header {
+  text-align: center;
+  max-width: 640px;
+  margin-bottom: 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.app__header h1 {
+  margin: 0;
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+}
+
+.app__header p {
+  margin: 0;
+  font-size: 1rem;
+  color: rgba(248, 250, 252, 0.86);
+}
+
+.app__meta {
+  font-size: 0.95rem;
+  color: rgba(248, 250, 252, 0.75);
+}
+
+.app__meta strong {
+  color: #facc15;
+}
+
+.app__main {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+}
+
+.app__placeholder {
+  color: #e2e8f0;
+  font-size: 1rem;
+}
+
+.app__footer {
+  margin-top: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.app__button {
+  border: none;
+  border-radius: 9999px;
+  background: linear-gradient(120deg, #f472b6, #f97316);
+  color: #0f172a;
+  font-size: 1.05rem;
+  font-weight: 700;
+  padding: 14px 28px;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  box-shadow: 0 12px 32px rgba(244, 114, 182, 0.35);
+}
+
+.app__button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 16px 40px rgba(249, 115, 22, 0.35);
+}
+
+.app__button:active {
+  transform: translateY(0);
+}
+
+.app__data-link {
+  color: rgba(248, 250, 252, 0.75);
+  font-size: 0.95rem;
+  text-decoration: none;
+}
+
+.app__data-link:hover {
+  text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+  .app {
+    padding: 32px 12px 48px;
+  }
+
+  .app__header {
+    margin-bottom: 24px;
+  }
+}
