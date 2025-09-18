@@ -202,6 +202,14 @@
   color: inherit;
 }
 
+.app__carousel-card-shell {
+  display: block;
+  width: 100%;
+  opacity: 0;
+  transform: translateY(22px);
+  animation: app-carousel-card-reveal 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
 .app__carousel-card:focus {
   outline: none;
 }
@@ -401,6 +409,18 @@
 
   35% {
     opacity: 0.55;
+  }
+}
+
+@keyframes app-carousel-card-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 

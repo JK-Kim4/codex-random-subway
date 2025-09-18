@@ -335,7 +335,9 @@ function App() {
                       onKeyDown={handleCarouselKeyDown}
                       style={cardStyle}
                     >
-                      <StationCard station={station} />
+                      <div className="app__carousel-card-shell" style={{ animationDelay: `${index * 140}ms` }}>
+                        <StationCard station={station} />
+                      </div>
                     </button>
                   );
                 })}

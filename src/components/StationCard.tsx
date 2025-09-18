@@ -8,15 +8,24 @@ interface StationCardProps {
 export function StationCard({ station }: StationCardProps) {
   const hasInternationalNames =
     station.englishName || station.chineseName || station.japaneseName;
-  const lineLabel = station.lines.length > 0 ? station.lines.join(', ') : '';
+  const uniqueLines = Array.from(new Set(station.lines));
+  const hasLines = uniqueLines.length > 0;
 
   return (
     <article className="station-card">
       <header className="station-card__header">
-        <h2 className="station-card__title">
-          <span className="station-card__name">{station.name}</span>
-          {lineLabel && <span className="station-card__line">({lineLabel})</span>}
-        </h2>
+        <div className="station-card__title-row">
+          <h2 className="station-card__title">{station.name}</h2>
+          {hasLines && (
+            <div className="station-card__line-group" aria-label="지나는 노선">
+              {uniqueLines.map((line) => (
+                <span key={line} className="station-card__line-chip">
+                  {line}
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
       </header>
 
       {hasInternationalNames && (
