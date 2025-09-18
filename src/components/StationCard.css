@@ -86,6 +86,10 @@
   color: #0f172a;
 }
 
+.station-card__map {
+  width: 100%;
+}
+
 @media (max-width: 480px) {
   .station-card {
     padding: 20px;
