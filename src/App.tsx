@@ -1,4 +1,13 @@
-import { ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  type CSSProperties,
+  type KeyboardEvent,
+  ChangeEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import StationCard from './components/StationCard';
 import subwayRaw from './assets/subway.json';
 import { useRandomStation } from './hooks/useRandomStation';
@@ -55,7 +64,7 @@ const buildStationList = (data: RawSubwayData): Station[] => {
 };
 
 function App() {
-  const dataset = subwayRaw as RawSubwayData;
+  const dataset = subwayRaw as unknown as RawSubwayData;
 
   const stations = useMemo(() => buildStationList(dataset), [dataset]);
   const maxSelectable = Math.max(MIN_DRAW_COUNT, Math.min(MAX_DRAW_COUNT, stations.length || MIN_DRAW_COUNT));
@@ -68,6 +77,7 @@ function App() {
   const [hasStarted, setHasStarted] = useState(false);
   const [isDrawing, setIsDrawing] = useState(false);
   const [displayedStations, setDisplayedStations] = useState<Station[]>([]);
+  const [activeStationIndex, setActiveStationIndex] = useState(0);
   const [loadingPreview, setLoadingPreview] = useState<Station[]>([]);
   const latestStationsRef = useRef<Station[]>([]);
   const revealTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -174,6 +184,7 @@ function App() {
 
     setHasStarted(true);
     setDisplayedStations([]);
+    setActiveStationIndex(0);
     setActiveDrawCount(nextCount);
     setLoadingPreview(initialPreview);
     setIsDrawing(true);
@@ -202,6 +213,46 @@ function App() {
       ? '다른 역들 다시 뽑기'
       : '다른 역 다시 뽑기'
     : '오늘의 역 뽑기';
+
+  const handlePreviousStation = () => {
+    if (displayedStations.length <= 1) {
+      return;
+    }
+
+    setActiveStationIndex((prev) => (prev === 0 ? displayedStations.length - 1 : prev - 1));
+  };
+
+  const handleNextStation = () => {
+    if (displayedStations.length <= 1) {
+      return;
+    }
+
+    setActiveStationIndex((prev) => (prev === displayedStations.length - 1 ? 0 : prev + 1));
+  };
+
+  useEffect(() => {
+    setActiveStationIndex(0);
+  }, [displayedStations]);
+
+  const handleSelectStation = (index: number) => {
+    setActiveStationIndex(index);
+  };
+
+  const handleCarouselKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (displayedStations.length <= 1) {
+      return;
+    }
+
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      handlePreviousStation();
+    } else if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      handleNextStation();
+    }
+  };
+
+  const hasResults = displayedStations.length > 0;
 
   return (
     <div className="app">
@@ -250,16 +301,53 @@ function App() {
           </section>
         )}
 
-        {hasStarted && !isDrawing && displayedStations.length > 0 && (
+        {hasStarted && !isDrawing && hasResults && (
           <section className="app__results">
             <p className="app__results-title">
               오늘의 추천 역{displayedStations.length > 1 ? ` ${displayedStations.length}곳` : ''}입니다!
             </p>
-            <div className="app__station-grid">
-              {displayedStations.map((station) => (
-                <StationCard key={station.id} station={station} />
-              ))}
+            <div className="app__results-carousel">
+              <div className="app__carousel-stage" role="group" aria-label="추천된 역 목록">
+                {displayedStations.map((station, index) => {
+                  const offset = index - activeStationIndex;
+                  const distance = Math.abs(offset);
+                  const direction = Math.sign(offset);
+                  const translatePercent = direction === 0 ? 0 : direction * Math.min(distance * 36, 96);
+                  const scale = index === activeStationIndex ? 1 : Math.max(0.82, 1 - Math.min(distance, 2) * 0.08);
+                  const opacity = index === activeStationIndex ? 1 : Math.max(0.2, 1 - distance * 0.32);
+                  const cardStyle: CSSProperties = {
+                    transform: `translateX(${translatePercent}%) scale(${scale})`,
+                    opacity,
+                    zIndex: Math.max(1, displayedStations.length - distance),
+                  };
+                  const ariaLabel = station.lines.length
+                    ? `${station.name} (${station.lines.join(', ')}) 역 자세히 보기`
+                    : `${station.name} 역 자세히 보기`;
+
+                  return (
+                    <button
+                      key={station.id}
+                      type="button"
+                      className={`app__carousel-card${index === activeStationIndex ? ' app__carousel-card--active' : ''}`}
+                      onClick={() => handleSelectStation(index)}
+                      aria-label={ariaLabel}
+                      aria-current={index === activeStationIndex ? 'true' : undefined}
+                      onKeyDown={handleCarouselKeyDown}
+                      style={cardStyle}
+                    >
+                      <div className="app__carousel-card-shell" style={{ animationDelay: `${index * 140}ms` }}>
+                        <StationCard station={station} />
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
+            {displayedStations.length > 1 && (
+              <p className="app__results-indicator" aria-live="polite">
+                {activeStationIndex + 1} / {displayedStations.length}
+              </p>
+            )}
           </section>
         )}
 
