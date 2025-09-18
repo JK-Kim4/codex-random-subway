@@ -18,6 +18,18 @@ npm install
 npm run dev
 ```
 
+## 환경 변수 설정
+
+네이버 지도 API를 사용하려면 프로젝트 루트에 있는 `.env.example`을 참고하여 `.env` 파일을 생성하고 발급받은 클라이언트 ID를 입력하세요.
+
+```bash
+cp .env.example .env
+# .env 파일을 열어 실제 발급받은 키로 값을 바꿔주세요
+VITE_NAVER_MAP_CLIENT_ID=실제-네이버-지도-클라이언트-ID
+```
+
+지도 키는 가능하면 사용 도메인을 제한하여 관리하고, 배포 환경에서도 동일한 환경 변수를 주입해야 합니다.
+
 ## 프로덕션 빌드
 ```bash
 npm run build
