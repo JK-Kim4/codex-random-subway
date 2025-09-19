@@ -11,22 +11,39 @@ import {
 import StationCard from './components/StationCard'
 import subwayRaw from './assets/subway.json'
 import { useRandomStation } from './hooks/useRandomStation'
-import type { RawStation, RawSubwayData, Station } from './types/subway'
+import type { RawSubwayData, Station } from './types/subway'
 import './styles/App.css'
+
+const DEFAULT_REGION = 'seoul' as const
+type SupportedRegion = typeof DEFAULT_REGION
+
+const REGION_DISPLAY_NAMES: Record<SupportedRegion, string> = {
+  seoul: '서울',
+}
 
 const MIN_DRAW_COUNT = 1
 const MAX_DRAW_COUNT = 5
 
-const toStationKey = (station: RawStation) =>
-  station.station_cd ?? `${station.line}-${station.name}`
+const normalizeStationName = (name: string) => name.trim()
 
-const buildStationList = (data: RawSubwayData): Station[] => {
+const createStationId = (name: string, region: SupportedRegion) =>
+  `${region}:${name}`
+
+interface BuildStationListOptions {
+  region?: SupportedRegion
+}
+
+const buildStationList = (
+  data: RawSubwayData,
+  { region = DEFAULT_REGION }: BuildStationListOptions = {}
+): Station[] => {
   const stationMap = new Map<string, Station>()
 
   data.DATA.forEach((line) => {
     line.node.forEach((edge) => {
       edge.station.forEach((rawStation) => {
-        const id = toStationKey(rawStation)
+        const normalizedName = normalizeStationName(rawStation.name)
+        const id = createStationId(normalizedName, region)
         const existing = stationMap.get(id)
 
         if (existing) {
@@ -47,7 +64,7 @@ const buildStationList = (data: RawSubwayData): Station[] => {
         } else {
           stationMap.set(id, {
             id,
-            name: rawStation.name,
+            name: normalizedName,
             lines: [rawStation.line],
             englishName: rawStation.station_nm_eng,
             chineseName: rawStation.station_nm_chn,
@@ -68,8 +85,17 @@ const buildStationList = (data: RawSubwayData): Station[] => {
 
 function App() {
   const dataset = subwayRaw as unknown as RawSubwayData
+  const [region] = useState<SupportedRegion>(DEFAULT_REGION)
 
-  const stations = useMemo(() => buildStationList(dataset), [dataset])
+  const stations = useMemo(
+    () => buildStationList(dataset, { region }),
+    [dataset, region]
+  )
+  const formattedStationCount = useMemo(
+    () => stations.length.toLocaleString('ko-KR'),
+    [stations.length]
+  )
+  const regionDisplayName = REGION_DISPLAY_NAMES[region] ?? region
   const maxSelectable = Math.max(
     MIN_DRAW_COUNT,
     Math.min(MAX_DRAW_COUNT, stations.length || MIN_DRAW_COUNT)
@@ -273,12 +299,15 @@ function App() {
     <div className='app'>
       <header className='app__header'>
         <h1>오늘의 랜덤 역은 어디?</h1>
-        <p>버튼 하나로 서울 지하철 785개 역 중 오늘의 모험을 뽑아보세요.</p>
+        <p>
+          버튼 하나로 {regionDisplayName} 지하철{' '}
+          {formattedStationCount}개 역 중 오늘의 모험을 뽑아보세요.
+        </p>
         <p>
           익숙한 곳일지, 전혀 모르는 곳일지—출발은 랜덤에 맡겨보는 거예요. 🚇✨
         </p>
         <p className='app__meta'>
-          총 <strong>{stations.length}</strong>개 역 정보 수록 · 데이터 버전{' '}
+          총 <strong>{formattedStationCount}</strong>개 역 정보 수록 · 데이터 버전{' '}
           {dataset.VERSION}
         </p>
       </header>
