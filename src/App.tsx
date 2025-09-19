@@ -286,14 +286,8 @@ function App() {
       <main className='app__main' aria-live='polite'>
         {!hasStarted && (
           <section className='app__intro'>
-            <p>
-              오늘은 어떤 역이 기다리고 있을까요? 무작정 떠나고 싶은 마음에
-              노선도를 덮어놓았습니다.
-            </p>
-            <p>
-              이제는 한 번에 여러 역을 추천받을 수 있어요. 뽑을 개수를 정하고
-              버튼을 누르면, 추첨 보드가 분주하게 이름표를 뒤섞기 시작합니다.
-            </p>
+            <p>오늘은 어떤 역이 기다리고 있을까요?</p>
+            <p>무작정 떠나고 싶은 마음에 노선도를 덮어놓았습니다.</p>
             <p className='app__intro-note'>
               자, 준비되셨다면 버튼을 눌러 랜덤 여정을 시작해볼까요?
             </p>
