@@ -13,6 +13,14 @@ export function StationCard({ station }: StationCardProps) {
   const hasLines = uniqueLines.length > 0;
   const hasCoordinates =
     Number.isFinite(station.latitude) && Number.isFinite(station.longitude);
+  const trimmedStationName = station.name.trim();
+  const stationNameWithSuffix = trimmedStationName.endsWith('역')
+    ? trimmedStationName
+    : `${trimmedStationName}역`;
+  const googleSearchQuery = `${stationNameWithSuffix} 주변 맛집`;
+  const googleSearchUrl = `https://www.google.com/search?q=${encodeURIComponent(
+    googleSearchQuery,
+  )}`;
   const formattedCoordinates = hasCoordinates
     ? `${station.latitude.toFixed(6)}, ${station.longitude.toFixed(6)}`
     : '위치 정보를 불러올 수 없습니다';
@@ -77,6 +85,20 @@ export function StationCard({ station }: StationCardProps) {
             markerLabel={station.name}
             ariaLabel={`${station.name} 위치 지도`}
           />
+          <div className="station-card__actions">
+            <a
+              className="station-card__search-link"
+              href={googleSearchUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label={`구글에서 ${googleSearchQuery} 검색`}
+            >
+              구글에서 {googleSearchQuery} 검색하기
+              <span aria-hidden="true" className="station-card__search-link-icon">
+                →
+              </span>
+            </a>
+          </div>
         </div>
       )}
     </article>
